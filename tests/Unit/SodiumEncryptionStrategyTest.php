@@ -4,7 +4,7 @@ namespace PHPNomad\Sodium\EncryptionIntegration\Tests\Unit;
 
 use PHPNomad\Encryption\Exceptions\DecryptionFailedException;
 use PHPNomad\Encryption\Providers\ArrayKeyProvider;
-use PHPNomad\Encryption\ValueObjects\EncryptedValue;
+use PHPNomad\Encryption\Models\EncryptedValue;
 use PHPNomad\Sodium\EncryptionIntegration\Strategies\SodiumEncryptionStrategy;
 use PHPUnit\Framework\TestCase;
 
@@ -23,7 +23,7 @@ class SodiumEncryptionStrategyTest extends TestCase
 
         $encrypted = $strategy->encrypt('sk-live-super-secret');
 
-        $this->assertSame(EncryptedValue::CIPHER_XCHACHA, $encrypted->getCipher());
+        $this->assertSame(SodiumEncryptionStrategy::CIPHER, $encrypted->getCipher());
         $this->assertNotSame('sk-live-super-secret', $encrypted->getCiphertext());
         $this->assertSame('sk-live-super-secret', $strategy->decrypt($encrypted));
     }
@@ -60,7 +60,7 @@ class SodiumEncryptionStrategyTest extends TestCase
 
         $bytes = $encrypted->getCiphertext();
         $bytes[0] = $bytes[0] === "\x00" ? "\x01" : "\x00";
-        $tampered = new EncryptedValue($bytes, $encrypted->getNonce(), 1, EncryptedValue::CIPHER_XCHACHA);
+        $tampered = new EncryptedValue($bytes, $encrypted->getNonce(), 1, SodiumEncryptionStrategy::CIPHER);
 
         $this->expectException(DecryptionFailedException::class);
         $strategy->decrypt($tampered);

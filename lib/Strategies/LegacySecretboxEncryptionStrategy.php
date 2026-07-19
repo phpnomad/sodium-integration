@@ -6,7 +6,7 @@ use PHPNomad\Encryption\Exceptions\DecryptionFailedException;
 use PHPNomad\Encryption\Exceptions\EncryptionException;
 use PHPNomad\Encryption\Interfaces\EncryptionStrategy;
 use PHPNomad\Encryption\Interfaces\KeyProvider;
-use PHPNomad\Encryption\ValueObjects\EncryptedValue;
+use PHPNomad\Encryption\Models\EncryptedValue;
 use SodiumException;
 use Throwable;
 
@@ -21,6 +21,14 @@ use Throwable;
  */
 final class LegacySecretboxEncryptionStrategy implements EncryptionStrategy
 {
+    /**
+     * Cipher discriminator this strategy stamps: libsodium's legacy
+     * sodium_crypto_secretbox (XSalsa20-Poly1305). Owned here, not in the
+     * contract package. {@see SodiumEncryptionStrategy} reads this constant to
+     * recognize secretbox-sealed values during migration.
+     */
+    public const CIPHER = 'secretbox';
+
     private KeyProvider $keys;
 
     public function __construct(KeyProvider $keys)
@@ -42,7 +50,7 @@ final class LegacySecretboxEncryptionStrategy implements EncryptionStrategy
             sodium_memzero($key);
         }
 
-        return new EncryptedValue($ciphertext, $nonce, $version, EncryptedValue::CIPHER_SECRETBOX);
+        return new EncryptedValue($ciphertext, $nonce, $version, self::CIPHER);
     }
 
     public function decrypt(EncryptedValue $value, string $context = ''): string

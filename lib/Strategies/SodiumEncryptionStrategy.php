@@ -6,7 +6,7 @@ use PHPNomad\Encryption\Exceptions\DecryptionFailedException;
 use PHPNomad\Encryption\Exceptions\EncryptionException;
 use PHPNomad\Encryption\Interfaces\EncryptionStrategy;
 use PHPNomad\Encryption\Interfaces\KeyProvider;
-use PHPNomad\Encryption\ValueObjects\EncryptedValue;
+use PHPNomad\Encryption\Models\EncryptedValue;
 use SodiumException;
 use Throwable;
 
@@ -26,6 +26,13 @@ use Throwable;
  */
 final class SodiumEncryptionStrategy implements EncryptionStrategy
 {
+    /**
+     * Cipher discriminator this strategy stamps onto every {@see EncryptedValue}
+     * it produces: libsodium's XChaCha20-Poly1305 IETF AEAD. The contract package
+     * names no ciphers — this identifier is owned here.
+     */
+    public const CIPHER = 'xchacha20poly1305_ietf';
+
     private KeyProvider $keys;
     private bool $allowLegacySecretboxFallback;
 
@@ -61,7 +68,7 @@ final class SodiumEncryptionStrategy implements EncryptionStrategy
             sodium_memzero($key);
         }
 
-        return new EncryptedValue($ciphertext, $nonce, $version, EncryptedValue::CIPHER_XCHACHA);
+        return new EncryptedValue($ciphertext, $nonce, $version, self::CIPHER);
     }
 
     public function decrypt(EncryptedValue $value, string $context = ''): string
@@ -83,8 +90,8 @@ final class SodiumEncryptionStrategy implements EncryptionStrategy
         $cipher = $value->getCipher();
 
         $plaintext = match ($cipher) {
-            EncryptedValue::CIPHER_XCHACHA => $this->aeadDecrypt($value, $context, $key),
-            EncryptedValue::CIPHER_SECRETBOX => $this->secretboxDecrypt($value, $key),
+            self::CIPHER => $this->aeadDecrypt($value, $context, $key),
+            LegacySecretboxEncryptionStrategy::CIPHER => $this->secretboxDecrypt($value, $key),
             default => $this->decryptUnknown($value, $context, $key),
         };
 

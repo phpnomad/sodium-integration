@@ -29,12 +29,13 @@ composer require phpnomad/encryption phpnomad/sodium-integration
 ## Usage
 
 Wire `SodiumEncryptionStrategy` as your `EncryptionStrategy`. Everything else —
-`FieldEncrypter`, `EncryptsFields`, the key providers, `EncryptedValue` — comes
-from `phpnomad/encryption` and is cipher-agnostic.
+the key providers, the `EncryptedValue` model — comes from `phpnomad/encryption`
+and is cipher-agnostic. How you persist the sealed value is your call; the
+contract imposes no format.
 
 ```php
 use PHPNomad\Encryption\Providers\ArrayKeyProvider;
-use PHPNomad\Encryption\ValueObjects\EncryptedValue;
+use PHPNomad\Encryption\Models\EncryptedValue;
 use PHPNomad\Sodium\EncryptionIntegration\Strategies\SodiumEncryptionStrategy;
 
 // A key ring holding one 32-byte key at version 1.
@@ -43,28 +44,16 @@ $keys = new ArrayKeyProvider([1 => sodium_crypto_aead_xchacha20poly1305_ietf_key
 $encryption = new SodiumEncryptionStrategy($keys);
 
 $sealed = $encryption->encrypt('sk-live-super-secret', 'tenant:42:column:token');
-$column = $sealed->toString();  // "enc:1:xchacha20poly1305_ietf:1:<nonce>:<ciphertext>"
 
-// Later:
-$plaintext = $encryption->decrypt(EncryptedValue::fromString($column), 'tenant:42:column:token');
+// Persist $sealed however you like — e.g. across columns:
+$ciphertext = base64_encode($sealed->getCiphertext());
+$nonce      = base64_encode($sealed->getNonce());
+$version    = $sealed->getKeyVersion();
+
+// Later — rebuild and decrypt with the same context:
+$restored  = new EncryptedValue(base64_decode($ciphertext), base64_decode($nonce), $version, SodiumEncryptionStrategy::CIPHER);
+$plaintext = $encryption->decrypt($restored, 'tenant:42:column:token');
 // => "sk-live-super-secret"
-```
-
-Field-level encryption over the sodium strategy:
-
-```php
-use PHPNomad\Encryption\Services\FieldEncrypter;
-
-$fields = new FieldEncrypter($encryption, ['access_token', 'refresh_token']);
-
-$row = $fields->encryptRow([
-    'id'            => 5,
-    'access_token'  => 'at-123',
-    'refresh_token' => 'rt-456',
-    'label'         => 'GitHub',   // untouched
-], context: 'connection:5');
-
-$row = $fields->decryptRow($row, context: 'connection:5');
 ```
 
 ### Reading legacy `secretbox` data

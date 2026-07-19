@@ -4,7 +4,7 @@ namespace PHPNomad\Sodium\EncryptionIntegration\Tests\Unit;
 
 use PHPNomad\Encryption\Exceptions\DecryptionFailedException;
 use PHPNomad\Encryption\Providers\ArrayKeyProvider;
-use PHPNomad\Encryption\ValueObjects\EncryptedValue;
+use PHPNomad\Encryption\Models\EncryptedValue;
 use PHPNomad\Sodium\EncryptionIntegration\Strategies\LegacySecretboxEncryptionStrategy;
 use PHPUnit\Framework\TestCase;
 
@@ -17,7 +17,7 @@ class LegacySecretboxEncryptionStrategyTest extends TestCase
         $ciphertext = sodium_crypto_secretbox('proprietary-value', $nonce, $key);
 
         $strategy = new LegacySecretboxEncryptionStrategy(new ArrayKeyProvider([1 => $key]));
-        $value = new EncryptedValue($ciphertext, $nonce, 1, EncryptedValue::CIPHER_SECRETBOX);
+        $value = new EncryptedValue($ciphertext, $nonce, 1, LegacySecretboxEncryptionStrategy::CIPHER);
 
         $this->assertSame('proprietary-value', $strategy->decrypt($value));
     }
@@ -28,7 +28,7 @@ class LegacySecretboxEncryptionStrategyTest extends TestCase
 
         $encrypted = $strategy->encrypt('value');
 
-        $this->assertSame(EncryptedValue::CIPHER_SECRETBOX, $encrypted->getCipher());
+        $this->assertSame(LegacySecretboxEncryptionStrategy::CIPHER, $encrypted->getCipher());
         $this->assertSame('value', $strategy->decrypt($encrypted));
     }
 

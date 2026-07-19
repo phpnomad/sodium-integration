@@ -1,0 +1,57 @@
+{
+    "name": "phpnomad/sodium-integration",
+    "description": "libsodium encryption strategy (XChaCha20-Poly1305 AEAD) for phpnomad/encryption — the default cipher integration, plus a secretbox migration strategy.",
+    "type": "library",
+    "keywords": [
+        "encryption",
+        "libsodium",
+        "sodium",
+        "aead",
+        "xchacha20poly1305",
+        "cryptography",
+        "phpnomad",
+        "integration"
+    ],
+    "homepage": "https://github.com/phpnomad/sodium-integration",
+    "readme": "README.md",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alex Standiford",
+            "email": "alex@novatori.us"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../phpnomad-encryption",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-sodium": "*",
+        "phpnomad/encryption": "@dev"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5 || ^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPNomad\\Sodium\\EncryptionIntegration\\": "lib/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PHPNomad\\Sodium\\EncryptionIntegration\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --testdox"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
